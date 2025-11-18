@@ -9,6 +9,7 @@ pipeline {
 	environment {
 		SPRING_PROFILES_ACTIVE = 'ci'
 		MAVEN_OPTS = '-Dmaven.repo.local=/root/.m2/repository'
+		DOTENV_PATH = credentials('APP_ENV')
 	}
 
 	options {
@@ -37,13 +38,12 @@ pipeline {
 		stage('Test') {
 			steps {
 				echo 'Running tests with environment secrets...'
-				withCredentials([file(credentialsId: 'APP_ENV', variable: 'DOTENV_PATH')]) {
-					sh """
-                set -a
-                . ${DOTENV_PATH}
-                set +a
-                mvn test
-             """
+				sh '''
+                    set -a
+                    . $DOTENV_PATH
+                    set +a
+                    mvn test
+                '''
 				}
 			}
 			post {
