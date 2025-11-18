@@ -1,4 +1,8 @@
 pipeline {
+	libraries {
+		lib('packagito-library')
+	}
+
 	agent {
 		docker {
 			image 'maven:3.9.6-eclipse-temurin-21'
@@ -38,7 +42,7 @@ pipeline {
 		stage('Build') {
 			steps {
 				echo 'Building project...'
-				sh 'mvn clean package -DskipTests'
+				sh 'mvn clean package'
 			}
 		}
 
@@ -48,8 +52,13 @@ pipeline {
 
 				withCredentials([file(credentialsId: 'APP_ENV', variable: 'DOTENV_PATH')]) {
 
-					withEnv(libraryResource('loadEnv.groovy')) {
-						sh 'mvn test'
+					script {
+						def envLoaderScriptContent = libraryResource('loadEnv.groovy')
+						def envVars = new GroovyShell().evaluate(envLoaderScriptContent)
+
+						withEnv(envVars) {
+							sh 'mvn test'
+						}
 					}
 				}
 			}
