@@ -1,7 +1,12 @@
 services:
+  # ==========================================
+  # 1. SPRING BOOT APPLICATION
+  # ==========================================
   app:
-    container_name: spring_app
-    build: .
+    container_name: packagito_app
+    build:
+      context: .
+      dockerfile: Dockerfile
     ports:
       - "${SPRING_PORT}:8080"
     env_file:
@@ -11,30 +16,37 @@ services:
         condition: service_healthy
     networks:
       - app_network
+    restart: unless-stopped
 
+  # ==========================================
+  # 2. MONGODB DATABASE
+  # ==========================================
   mongodb:
     image: mongo:7
-    container_name: mongo_db
+    container_name: packagito_db
     env_file:
       - .env
     environment:
       MONGO_INITDB_ROOT_USERNAME: ${MONGO_INITDB_ROOT_USERNAME}
       MONGO_INITDB_ROOT_PASSWORD: ${MONGO_INITDB_ROOT_PASSWORD}
     ports:
-      - "27017:27017"
+      - "${MONGO_PORT}:27017"
     volumes:
       - mongo_data:/data/db
     networks:
       - app_network
     healthcheck:
-      test: echo 'db.runCommand("ping").ok' | mongosh localhost:27017/test --quiet
+      test: echo 'db.runCommand("ping").ok' | mongosh localhost:27017/test --quiet -u ${MONGO_INITDB_ROOT_USERNAME} -p ${MONGO_INITDB_ROOT_PASSWORD} --authenticationDatabase admin
       interval: 10s
-      timeout: 10s
+      timeout: 5s
       retries: 5
-      start_period: 40s
+      start_period: 20s
 
+  # ==========================================
+  # 3. JENKINS (CI/CD)
+  # ==========================================
   jenkins:
-    container_name: jenkins_master
+    container_name: packagito_jenkins
     build:
       context: .
       dockerfile: Dockerfile.jenkins
@@ -44,19 +56,18 @@ services:
       - "${JENKINS_AGENT_PORT}:50000"
     env_file:
       - .env
-    environment:
-      JAVA_OPTS: "-Djenkins.install.runSetupWizard=false"
     volumes:
       - jenkins_home:/var/jenkins_home
       - /var/run/docker.sock:/var/run/docker.sock
       - maven_data:/root/.m2
     networks:
       - app_network
-    dns: 8.8.8.8
+    restart: unless-stopped
 
 networks:
   app_network:
     name: packagito_net
+    driver: bridge
 
 volumes:
   mongo_data:

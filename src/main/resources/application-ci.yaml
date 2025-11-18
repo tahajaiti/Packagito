@@ -1,5 +1,22 @@
-# This profile is only active during Jenkins/CI builds
 spring:
+  config:
+    activate:
+      on-profile: ci
+
   data:
     mongodb:
-      uri: ${SPRING_DATA_MONGODB_URI}
+      uri: ${MONGODB_TEST_URI}
+
+  main:
+    lazy-initialization: true
+
+app:
+  security:
+    bcrypt-strength: 4
+
+logging:
+  level:
+    root: WARN
+    com.kyojin.packagito: INFO
+    org.springframework.data.mongodb: ERROR
+    org.springframework.security: ERROR
