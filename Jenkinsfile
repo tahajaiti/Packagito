@@ -45,7 +45,7 @@ pipeline {
 
 						def envVars = []
 						def envContent = readFile(env.DOTENV_PATH)
-
+						
 						envContent.split("\\r?\\n").each { line ->
 							def cleanLine = line.trim()
 
@@ -53,7 +53,9 @@ pipeline {
 								def parts = cleanLine.split("=", 2)
 								def varName = parts[0].trim()
 
-								def varValue = parts[1].trim().replaceAll('^"|"$', '').replaceAll("^'|'$", "")
+								def varValue = parts[1].trim()
+								.replaceAll('^"|"$', '')
+								.replaceAll("^'|'\$", "")
 
 								envVars << "${varName}=${varValue}"
 
