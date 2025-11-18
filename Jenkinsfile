@@ -36,31 +36,33 @@ pipeline {
 
 		stage('Test') {
 			steps {
-				echo 'Running tests with environment secrets loaded directly...'
+				echo 'Running tests with environment secrets...'
 
 				withCredentials([file(credentialsId: 'APP_ENV', variable: 'DOTENV_PATH')]) {
 
 					script {
-						// --- DEBUG START ---
-						echo "DEBUG: Secret file downloaded to path: ${env.DOTENV_PATH}"
+						echo "DEBUG: Parsing secret file at ${env.DOTENV_PATH}"
 
 						def envVars = []
 						def envContent = readFile(env.DOTENV_PATH)
 
-						envContent.eachLine { line ->
-							if (!line.trim().startsWith("#") && line.contains("=")) {
-								def parts = line.split("=", 2)
+						envContent.split("\\r?\\n").each { line ->
+							def cleanLine = line.trim()
+
+							if (cleanLine.length() > 0 && !cleanLine.startsWith("#") && cleanLine.contains("=")) {
+								def parts = cleanLine.split("=", 2)
 								def varName = parts[0].trim()
-								def varValue = parts[1].trim().replaceAll('"', '').replaceAll("'", "")
+
+								def varValue = parts[1].trim().replaceAll('^"|"$', '').replaceAll("^'|'$", "")
+
 								envVars << "${varName}=${varValue}"
+
+								echo "DEBUG: Found config key: ${varName}"
 							}
 						}
 
-						echo "DEBUG: Parsed variables count: ${envVars.size()}"
-						echo "DEBUG: Variables to inject: ${envVars}"
-						// --- DEBUG END ---
+						echo "DEBUG: Total variables loaded: ${envVars.size()}"
 
-						// Now run the tests with the secrets loaded
 						withEnv(envVars) {
 							sh 'mvn test'
 						}
