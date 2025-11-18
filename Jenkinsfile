@@ -7,7 +7,7 @@ pipeline {
 	}
 
 	environment {
-		//SPRING_PROFILES_ACTIVE = 'dev'
+		SPRING_PROFILES_ACTIVE = 'ci'
 		MAVEN_OPTS = '-Dmaven.repo.local=/root/.m2/repository'
 	}
 
@@ -45,7 +45,13 @@ pipeline {
 		stage('Test') {
 			steps {
 				echo 'Running tests...'
-				sh 'mvn test'
+
+				withCredentials([file(credentialsId: 'APP_ENV', variable: 'DOTENV_PATH')]) {
+
+					withEnv(libraryResource('loadEnv.groovy')) {
+						sh 'mvn test'
+					}
+				}
 			}
 			post {
 				always {

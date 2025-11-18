@@ -1,0 +1,5 @@
+# This profile is only active during Jenkins/CI builds
+spring:
+  data:
+    mongodb:
+      uri: ${SPRING_DATA_MONGODB_URI}
