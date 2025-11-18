@@ -45,25 +45,21 @@ pipeline {
 
 						def envVars = []
 						def envContent = readFile(env.DOTENV_PATH)
-						
+
 						envContent.split("\\r?\\n").each { line ->
 							def cleanLine = line.trim()
-
 							if (cleanLine.length() > 0 && !cleanLine.startsWith("#") && cleanLine.contains("=")) {
 								def parts = cleanLine.split("=", 2)
 								def varName = parts[0].trim()
-
 								def varValue = parts[1].trim()
 								.replaceAll('^"|"$', '')
 								.replaceAll("^'|'\$", "")
 
+								echo "DEBUG LOADED: ${varName} = ${varValue}"
+								
 								envVars << "${varName}=${varValue}"
-
-								echo "DEBUG: Found config key: ${varName}"
 							}
 						}
-
-						echo "DEBUG: Total variables loaded: ${envVars.size()}"
 
 						withEnv(envVars) {
 							sh 'mvn test'
