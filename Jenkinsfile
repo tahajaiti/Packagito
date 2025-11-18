@@ -41,6 +41,10 @@ pipeline {
 				withCredentials([file(credentialsId: 'APP_ENV', variable: 'DOTENV_PATH')]) {
 
 					script {
+						// --- DEBUG START ---
+						echo "DEBUG: Secret file downloaded to path: ${env.DOTENV_PATH}"
+						// --- DEBUG END ---
+
 						def envVars = []
 
 						def envContent = readFile(env.DOTENV_PATH)
@@ -53,6 +57,13 @@ pipeline {
 								envVars << "${varName}=${varValue}"
 							}
 						}
+
+						// --- DEBUG START ---
+						echo "DEBUG: Parsed variables count: ${envVars.size()}"
+						// This echo will print the entire list of variables to be injected.
+						// **Since it's a list of strings, Jenkins should mask the sensitive parts.**
+						echo "DEBUG: Variables to inject: ${envVars}"
+						// --- DEBUG END ---
 
 						withEnv(envVars) {
 							sh 'mvn test'
