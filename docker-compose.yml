@@ -35,7 +35,9 @@ services:
 
   jenkins:
     container_name: jenkins_master
-    image: jenkins/jenkins:lts
+    build:
+      context: .
+      dockerfile: Dockerfile.jenkins
     user: root
     ports:
       - "${JENKINS_PORT}:8080"
@@ -50,6 +52,7 @@ services:
       - maven_data:/root/.m2
     networks:
       - app_network
+    dns: 8.8.8.8
 
 networks:
   app_network:

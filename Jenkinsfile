@@ -70,9 +70,6 @@ pipeline {
 		}
 		failure {
 			echo '[ERROR]: Build or tests failed.'
-			mail to: 'taha.jaiti@gmail.com',
-			subject: "Build Failed: ${currentBuild.fullDisplayName}",
-			body: "Check Jenkins: ${env.BUILD_URL}"
 		}
 		always {
 			cleanWs()
