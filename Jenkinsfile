@@ -1,8 +1,4 @@
 pipeline {
-	libraries {
-		lib('packagito-library')
-	}
-
 	agent {
 		docker {
 			image 'maven:3.9.6-eclipse-temurin-21'
@@ -31,14 +27,6 @@ pipeline {
 			}
 		}
 
-		stage('Setup Environment') {
-			steps {
-				echo 'Verifying Maven and JDK...'
-				sh 'java -version'
-				sh 'mvn -version'
-			}
-		}
-
 		stage('Build') {
 			steps {
 				echo 'Building project...'
@@ -48,13 +36,23 @@ pipeline {
 
 		stage('Test') {
 			steps {
-				echo 'Running tests...'
+				echo 'Running tests with environment secrets loaded directly...'
 
 				withCredentials([file(credentialsId: 'APP_ENV', variable: 'DOTENV_PATH')]) {
 
 					script {
-						def envLoaderScriptContent = libraryResource('loadEnv.groovy')
-						def envVars = new GroovyShell().evaluate(envLoaderScriptContent)
+						def envVars = []
+
+						def envContent = readFile(env.DOTENV_PATH)
+
+						envContent.eachLine { line ->
+							if (!line.trim().startsWith("#") && line.contains("=")) {
+								def parts = line.split("=", 2)
+								def varName = parts[0].trim()
+								def varValue = parts[1].trim().replaceAll('"', '').replaceAll("'", "")
+								envVars << "${varName}=${varValue}"
+							}
+						}
 
 						withEnv(envVars) {
 							sh 'mvn test'
