@@ -10,7 +10,7 @@ services:
       mongodb:
         condition: service_healthy
     networks:
-      - backend
+      - app_network
 
   mongodb:
     image: mongo:7
@@ -25,7 +25,7 @@ services:
     volumes:
       - mongo_data:/data/db
     networks:
-      - backend
+      - app_network
     healthcheck:
       test: echo 'db.runCommand("ping").ok' | mongosh localhost:27017/test --quiet
       interval: 10s
@@ -47,12 +47,15 @@ services:
     volumes:
       - jenkins_home:/var/jenkins_home
       - /var/run/docker.sock:/var/run/docker.sock
+      - maven_data:/root/.m2
     networks:
-      - backend
+      - app_network
 
 networks:
-  backend:
+  app_network:
+    name: packagito_net
 
 volumes:
   mongo_data:
   jenkins_home:
+  maven_data:
