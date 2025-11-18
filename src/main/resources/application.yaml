@@ -7,7 +7,13 @@ spring:
   data:
     mongodb:
       uri: ${SPRING_DATA_MONGODB_URI}
+  mvc:
+    servlet:
+      path: /api
 
+springdoc:
+  swagger-ui:
+    path: /swagger.html
 
 logging:
   level:
