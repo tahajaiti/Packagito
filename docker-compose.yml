@@ -1,0 +1,58 @@
+services:
+  app:
+    container_name: spring_app
+    build: .
+    ports:
+      - "${SPRING_PORT}:8080"
+    env_file:
+      - .env
+    depends_on:
+      mongodb:
+        condition: service_healthy
+    networks:
+      - backend
+
+  mongodb:
+    image: mongo:7
+    container_name: mongo_db
+    env_file:
+      - .env
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: ${MONGO_INITDB_ROOT_USERNAME}
+      MONGO_INITDB_ROOT_PASSWORD: ${MONGO_INITDB_ROOT_PASSWORD}
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo_data:/data/db
+    networks:
+      - backend
+    healthcheck:
+      test: echo 'db.runCommand("ping").ok' | mongosh localhost:27017/test --quiet
+      interval: 10s
+      timeout: 10s
+      retries: 5
+      start_period: 40s
+
+  jenkins:
+    container_name: jenkins_master
+    image: jenkins/jenkins:lts
+    user: root
+    ports:
+      - "${JENKINS_PORT}:8080"
+      - "${JENKINS_AGENT_PORT}:50000"
+    env_file:
+      - .env
+    environment:
+      JAVA_OPTS: "-Djenkins.install.runSetupWizard=false"
+    volumes:
+      - jenkins_home:/var/jenkins_home
+      - /var/run/docker.sock:/var/run/docker.sock
+    networks:
+      - backend
+
+networks:
+  backend:
+
+volumes:
+  mongo_data:
+  jenkins_home:
