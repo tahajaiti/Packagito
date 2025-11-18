@@ -37,34 +37,13 @@ pipeline {
 		stage('Test') {
 			steps {
 				echo 'Running tests with environment secrets...'
-
 				withCredentials([file(credentialsId: 'APP_ENV', variable: 'DOTENV_PATH')]) {
-
-					script {
-						echo "DEBUG: Parsing secret file at ${env.DOTENV_PATH}"
-
-						def envVars = []
-						def envContent = readFile(env.DOTENV_PATH)
-
-						envContent.split("\\r?\\n").each { line ->
-							def cleanLine = line.trim()
-							if (cleanLine.length() > 0 && !cleanLine.startsWith("#") && cleanLine.contains("=")) {
-								def parts = cleanLine.split("=", 2)
-								def varName = parts[0].trim()
-								def varValue = parts[1].trim()
-								.replaceAll('^"|"$', '')
-								.replaceAll("^'|'\$", "")
-
-								echo "DEBUG LOADED: ${varName} = ${varValue}"
-								
-								envVars << "${varName}=${varValue}"
-							}
-						}
-
-						withEnv(envVars) {
-							sh 'mvn test'
-						}
-					}
+					sh """
+                set -a
+                . ${DOTENV_PATH}
+                set +a
+                mvn test
+             """
 				}
 			}
 			post {
