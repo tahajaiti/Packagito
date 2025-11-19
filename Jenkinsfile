@@ -11,8 +11,8 @@ pipeline {
 
 		REPO_URL = 'https://github.com/tahajaiti/Packagito.git'
 
-		GIT_CREDS_ID = 'git-credentials'
-		DOCKER_CREDS_ID = 'dockerhub-credentials'
+		GIT_CREDS_ID = 'GITHUB-CREDS'
+		DOCKER_CREDS_ID = 'DOCKERHUB-CREDS'
 
 		DOCKER_IMAGE = 'tahajaiti/packagito'
 	}
@@ -39,7 +39,7 @@ pipeline {
 			}
 			steps {
 				echo "Running Tests on branch: ${env.BRANCH_NAME}"
-				withCredentials([file(credentialsId: 'APP_ENV', variable: 'DOTENV_PATH')]) {
+				withCredentials([file(credentialsId: 'PACKAGITO_ENV', variable: 'DOTENV_PATH')]) {
 					sh """
                         set -a
                         . ${DOTENV_PATH}
