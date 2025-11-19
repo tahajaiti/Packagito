@@ -9,7 +9,6 @@ pipeline {
 		DOCKER_IMAGE = 'tahajaiti/packagito'
 
 		MAVEN_CACHE = "${JENKINS_HOME}/maven-cache"
-		DOCKER_LAYER_CACHE = "${JENKINS_HOME}/docker-cache"
 	}
 
 	options {
@@ -82,14 +81,17 @@ pipeline {
 		stage('Build & Test') {
 			steps {
 				script {
-					sh "mkdir -p ${MAVEN_CACHE}"
+					sh """
+                   mkdir -p ${MAVEN_CACHE}
+                   chmod -R 777 ${MAVEN_CACHE}
+                """
 
 					docker.image('maven:3.9.6-eclipse-temurin-21')
-					.inside("--network packagito_net -v ${MAVEN_CACHE}:/root/.m2") {
+					.inside("--network packagito_net -v ${MAVEN_CACHE}:/var/maven/.m2") {
 						sh '''
-                         # Use cached dependencies
                          mvn clean verify \
                             -Dspring.profiles.active=ci \
+                            -Dmaven.repo.local=/var/maven/.m2/repository \
                             -Dmaven.test.failure.ignore=false \
                             --batch-mode \
                             --show-version \
@@ -136,11 +138,11 @@ pipeline {
 			steps {
 				echo 'Building and pushing Docker image...'
 				script {
-					sh "mkdir -p ${MAVEN_CACHE}"
+					sh "mkdir -p ${MAVEN_CACHE} && chmod -R 777 ${MAVEN_CACHE}"
 
 					withCredentials([usernamePassword(credentialsId: DOCKER_CREDS_ID, usernameVariable: 'DOCKER_USER', passwordVariable: 'DOCKER_PASS')]) {
 						docker.image('maven:3.9.6-eclipse-temurin-21')
-						.inside("-v ${MAVEN_CACHE}:/root/.m2") {
+						.inside("-v ${MAVEN_CACHE}:/var/maven/.m2") {
 							sh '''
                             mvn compile jib:build \
                                -DskipTests \
@@ -148,6 +150,7 @@ pipeline {
                                -Djib.to.tags=latest \
                                -Djib.to.auth.username=${DOCKER_USER} \
                                -Djib.to.auth.password=${DOCKER_PASS} \
+                               -Dmaven.repo.local=/var/maven/.m2/repository \
                                --batch-mode \
                                -Dorg.slf4j.simpleLogger.log.org.apache.maven.cli.transfer.Slf4jMavenTransferListener=warn
                          '''
@@ -188,8 +191,8 @@ pipeline {
 				if (currentBuild.number % 30 == 0) {
 					echo "Cleaning old Maven artifacts..."
 					sh """
-                   find ${MAVEN_CACHE} -name "*.lastUpdated" -delete
-                   find ${MAVEN_CACHE} -type d -empty -delete
+                   find ${MAVEN_CACHE} -name "*.lastUpdated" -delete || true
+                   find ${MAVEN_CACHE} -type d -empty -delete || true
                 """
 				}
 			}
