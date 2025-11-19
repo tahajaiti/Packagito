@@ -49,8 +49,13 @@ pipeline {
 			steps {
 				script {
 					docker.image('maven:3.9.6-eclipse-temurin-21')
-					.inside("--network packagito_net -v /tmp/m2:/root/.m2") {
-						sh 'mvn clean verify'
+					.inside("--network packagito_net") {
+						sh '''
+                        mkdir -p ${WORKSPACE}/.m2/repository
+                        mvn clean verify \
+                            -Dmaven.repo.local=${WORKSPACE}/.m2/repository \
+                            -Dspring.profiles.active=ci
+                    '''
 					}
 				}
 			}

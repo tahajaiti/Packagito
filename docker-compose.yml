@@ -1,7 +1,7 @@
-version: '3.9'
-
 services:
-  # Spring Boot App
+  # ==========================================
+  # 1. SPRING BOOT APPLICATION
+  # ==========================================
   app:
     container_name: packagito_app
     build:
@@ -18,7 +18,9 @@ services:
       - app_network
     restart: unless-stopped
 
-  # MongoDB
+  # ==========================================
+  # 2. MONGODB DATABASE
+  # ==========================================
   mongodb:
     image: mongo:7
     container_name: packagito_db
