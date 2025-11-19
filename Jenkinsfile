@@ -1,10 +1,5 @@
 pipeline {
-	agent {
-		docker {
-			image 'maven:3.9.6-eclipse-temurin-21'
-			args '-v maven_data:/root/.m2 --network packagito_net'
-		}
-	}
+	agent any
 
 	environment {
 		SPRING_PROFILES_ACTIVE = 'ci'
@@ -31,22 +26,28 @@ pipeline {
 		}
 
 		stage('Test & Verify') {
-			when {
-				anyOf {
-					branch 'dev'
-					branch 'main'
-				}
-			}
+			when { anyOf { branch 'dev'; branch 'main' } }
 			steps {
-				echo "Running Tests on branch: ${env.BRANCH_NAME}"
-				withCredentials([file(credentialsId: 'PACKAGITO_ENV', variable: 'DOTENV_PATH')]) {
-					sh """
-                        set -a
-                        . ${DOTENV_PATH}
-                        set +a
+				script {
+					withCredentials([file(credentialsId: 'PACKAGITO_ENV', variable: 'DOTENV_PATH')]) {
+						sh """
+                        cp ${DOTENV_PATH} .env
 
-                        mvn verify
-                    """
+                        docker compose up -d --wait mongodb
+                    	"""
+
+						try {
+							docker.image('maven:3.9.6-eclipse-temurin-21')
+							.inside("-v maven_data:/root/.m2 --network packagito_net") {
+
+								echo "Connected to packagito_net. Running tests..."
+								sh 'mvn verify'
+							}
+						} finally {
+							sh 'docker compose down'
+							sh 'rm .env'
+						}
+					}
 				}
 			}
 		}
