@@ -31,23 +31,21 @@ pipeline {
 				script {
 					withCredentials([file(credentialsId: 'PACKAGITO_ENV', variable: 'DOTENV_PATH')]) {
 						sh """
-                     # 1. Use shell variable (escape \$) to fix security warning
-                     cp \$DOTENV_PATH .env
+	                     cp \$DOTENV_PATH .env
 
-                     set -a
-                     # 2. Use explicit path (./) to fix 'not found' error
-                     . ./.env
-                     set +a
+    	                 set -a
+        	             . ./.env
+            	         set +a
 
-                     docker compose up -d --wait mongodb
-                   """
+                	     docker compose up -d --wait mongodb
+                   		"""
 
 						try {
 							docker.image('maven:3.9.6-eclipse-temurin-21')
-							.inside("-v maven_data:/root/.m2 --network packagito_net") {
+							.inside("--network packagito_net") {
 
 								echo "Connected to packagito_net. Running tests..."
-								sh 'mvn -Dmaven.repo.local=/root/.m2/repository verify'
+								sh 'mvn verify'
 							}
 						} finally {
 							sh 'docker compose down'
