@@ -33,7 +33,7 @@ pipeline {
 						sh """
                         cp ${DOTENV_PATH} .env
 
-                        docker compose up -d --wait mongodb
+                        docker-compose up -d --wait mongodb
                     	"""
 
 						try {
