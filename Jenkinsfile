@@ -31,9 +31,10 @@ pipeline {
 				script {
 					withCredentials([file(credentialsId: 'PACKAGITO_ENV', variable: 'DOTENV_PATH')]) {
 						sh """
-                        set -a
-                        . ${DOTENV_PATH}
-                        set +a
+                        cp ${DOTENV_PATH} .env
+        				set -a
+        				. .env
+        				set +a
 
                         docker compose up -d --wait mongodb
                     	"""
