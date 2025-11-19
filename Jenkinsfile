@@ -31,13 +31,16 @@ pipeline {
 				script {
 					withCredentials([file(credentialsId: 'PACKAGITO_ENV', variable: 'DOTENV_PATH')]) {
 						sh """
-                        cp ${DOTENV_PATH} .env
-        				set -a
-        				. .env
-        				set +a
+                     # 1. Use shell variable (escape \$) to fix security warning
+                     cp \$DOTENV_PATH .env
 
-                        docker compose up -d --wait mongodb
-                    	"""
+                     set -a
+                     # 2. Use explicit path (./) to fix 'not found' error
+                     . ./.env
+                     set +a
+
+                     docker compose up -d --wait mongodb
+                   """
 
 						try {
 							docker.image('maven:3.9.6-eclipse-temurin-21')
