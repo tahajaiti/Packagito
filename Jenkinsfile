@@ -35,7 +35,7 @@ pipeline {
                         . ${DOTENV_PATH}
                         set +a
 
-                        docker-compose up -d --wait mongodb
+                        docker compose up -d --wait mongodb
                     	"""
 
 						try {
