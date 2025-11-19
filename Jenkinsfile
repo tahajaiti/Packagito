@@ -14,7 +14,7 @@ pipeline {
 
 	options {
 		timestamps()
-		timeout(time: 15, unit: 'MINUTES')
+		timeout(time: 20, unit: 'MINUTES')
 		skipStagesAfterUnstable()
 	}
 
@@ -31,54 +31,44 @@ pipeline {
 			}
 		}
 
-		stage('Test & Verify') {
-			when { anyOf { branch 'dev'; branch 'main' } }
+		stage('Setup Environment') {
+			steps {
+				withCredentials([file(credentialsId: 'PACKAGITO_ENV', variable: 'DOTENV_PATH')]) {
+					sh 'cp $DOTENV_PATH .env'
+				}
+			}
+		}
+
+		stage('Start Services') {
+			steps {
+				sh 'docker compose up -d --wait mongodb'
+			}
+		}
+
+		stage('Build & Test') {
 			steps {
 				script {
-					withCredentials([file(credentialsId: 'PACKAGITO_ENV', variable: 'DOTENV_PATH')]) {
-						sh """
-	                     cp \$DOTENV_PATH .env
-
-    	                 set -a
-        	             . ./.env
-            	         set +a
-
-                	     docker compose up -d --wait mongodb
-                   		"""
-
-						try {
-							docker.image('maven:3.9.6-eclipse-temurin-21')
-							.inside("--network packagito_net") {
-
-								echo "Connected to packagito_net. Running tests..."
-								sh 'mvn verify'
-							}
-						} finally {
-							sh 'docker compose down'
-						}
+					docker.image('maven:3.9.6-eclipse-temurin-21')
+					.inside("--network packagito_net -v /tmp/m2:/root/.m2") {
+						sh 'mvn clean verify'
 					}
 				}
 			}
 		}
 
 		stage('Auto-Push to Main') {
-			when {
-				branch 'dev'
-			}
+			when { branch 'dev' }
 			steps {
-				echo 'Tests Passed on Dev. Merging to Main...'
+				echo 'Tests passed on dev, merging to main...'
 				withCredentials([usernamePassword(credentialsId: GIT_CREDS_ID, usernameVariable: 'GIT_USER', passwordVariable: 'GIT_PASS')]) {
 					sh """
                         git config user.email "jenkins@packagito.com"
                         git config user.name "Jenkins CI"
 
                         git remote set-url origin https://${GIT_USER}:${GIT_PASS}@github.com/tahajaiti/Packagito.git
-
                         git fetch origin main
-
                         git checkout -B main origin/main
-                        git merge ${env.GIT_COMMIT} --no-ff -m "[CI/JENKINS]: Merge branch 'dev' into main"
-
+                        git merge ${env.GIT_COMMIT} --no-ff -m "[CI/JENKINS]: Merge dev into main"
                         git push origin main
                     """
 				}
@@ -86,20 +76,17 @@ pipeline {
 		}
 
 		stage('Build & Push Docker Image') {
-			when {
-				branch 'main'
-			}
+			when { branch 'main' }
 			steps {
-				echo 'Building and Pushing to Docker Hub...'
-
+				echo 'Building and pushing Docker image...'
 				withCredentials([usernamePassword(credentialsId: DOCKER_CREDS_ID, usernameVariable: 'DOCKER_USER', passwordVariable: 'DOCKER_PASS')]) {
 					sh """
-                       mvn compile jib:build \
-                       -DskipTests \
-                       -Djib.to.image=docker.io/${DOCKER_IMAGE}:${env.BUILD_NUMBER} \
-                       -Djib.to.tags=latest \
-                       -Djib.to.auth.username=${DOCKER_USER} \
-                       -Djib.to.auth.password=${DOCKER_PASS}
+                        mvn compile jib:build \
+                            -DskipTests \
+                            -Djib.to.image=docker.io/${DOCKER_IMAGE}:${env.BUILD_NUMBER} \
+                            -Djib.to.tags=latest \
+                            -Djib.to.auth.username=${DOCKER_USER} \
+                            -Djib.to.auth.password=${DOCKER_PASS}
                     """
 				}
 			}
@@ -107,13 +94,11 @@ pipeline {
 	}
 
 	post {
-		failure {
-			echo "[ERROR]: Build FAILED on branch ${env.BRANCH_NAME}."
-		}
+		failure { echo "[ERROR]: Build FAILED on branch ${env.BRANCH_NAME}" }
 		success {
 			script {
 				if (env.BRANCH_NAME == 'dev') {
-					echo "[DEV SUCCESS]: Code merged to main."
+					echo "[DEV SUCCESS]: Code merged to main"
 				} else if (env.BRANCH_NAME == 'main') {
 					echo "[MAIN SUCCESS]: Docker Image Deployed: ${DOCKER_IMAGE}:${env.BUILD_NUMBER}"
 				}
