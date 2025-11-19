@@ -47,7 +47,6 @@ pipeline {
 							}
 						} finally {
 							sh 'docker compose down'
-							sh 'rm .env'
 						}
 					}
 				}
