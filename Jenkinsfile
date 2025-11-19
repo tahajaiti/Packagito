@@ -43,7 +43,7 @@ pipeline {
 							.inside("-v maven_data:/root/.m2 --network packagito_net") {
 
 								echo "Connected to packagito_net. Running tests..."
-								sh 'mvn verify'
+								sh 'mvn -Dmaven.repo.local=/root/.m2/repository verify'
 							}
 						} finally {
 							sh 'docker compose down'
