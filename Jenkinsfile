@@ -15,8 +15,6 @@ pipeline {
 		DOCKER_CREDS_ID = 'dockerhub-credentials'
 
 		DOCKER_IMAGE = 'tahajaiti/packagito'
-
-		MAVEN_OPTS = '-B -ntp -Dstyle.color=always'
 	}
 
 	options {
@@ -69,7 +67,7 @@ pipeline {
                         git fetch origin main
 
                         git checkout -B main origin/main
-                        git merge ${env.GIT_COMMIT} --no-ff -m "Merge branch 'dev' into main [Jenkins CI]"
+                        git merge ${env.GIT_COMMIT} --no-ff -m "[CI/JENKINS]: Merge branch 'dev' into main"
 
                         git push origin main
                     """
@@ -86,7 +84,7 @@ pipeline {
 
 				withCredentials([usernamePassword(credentialsId: DOCKER_CREDS_ID, usernameVariable: 'DOCKER_USER', passwordVariable: 'DOCKER_PASS')]) {
 					sh """
-                       mvn ${MAVEN_OPTS} compile jib:build \
+                       mvn compile jib:build \
                        -DskipTests \
                        -Djib.to.image=docker.io/${DOCKER_IMAGE}:${env.BUILD_NUMBER} \
                        -Djib.to.tags=latest \
