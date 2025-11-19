@@ -109,26 +109,20 @@ pipeline {
 				script {
 					withCredentials([usernamePassword(credentialsId: GIT_CREDS_ID, usernameVariable: 'GIT_USER', passwordVariable: 'GIT_PASS')]) {
 						sh '''
-                      git config user.email "jenkins@packagito.com"
-                      git config user.name "Jenkins CI"
+                    git config user.email "jenkins@packagito.com"
+                    git config user.name "Jenkins CI"
 
-                      git remote set-url origin https://${GIT_USER}:${GIT_PASS}@github.com/tahajaiti/Packagito.git
+                    git remote set-url origin https://${GIT_USER}:${GIT_PASS}@github.com/tahajaiti/Packagito.git
 
-                      git fetch origin
+                    git fetch origin
 
-                      if git show-ref --verify --quiet refs/remotes/origin/main; then
-                          echo "Main branch exists, checking out..."
-                          git checkout main 2>/dev/null || git checkout -b main origin/main
-                          git reset --hard origin/main
-                      else
-                          echo "Main branch does not exist, creating from current commit..."
-                          git checkout -b main
-                      fi
+                    git checkout main || git checkout -b main origin/main
+                    git reset --hard origin/main
 
-                      git merge origin/dev --no-ff -m "[CI/JENKINS]: Merge dev into main" || echo "Already merged"
+                    git merge origin/dev --no-ff -m "[CI/JENKINS]: Merge dev into main"
 
-                      git push origin main
-                   '''
+                    git push origin main
+                	'''
 					}
 				}
 			}
