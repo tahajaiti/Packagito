@@ -44,7 +44,7 @@ pipeline {
 					$class: 'GitSCM',
 					branches: scm.branches,
 					extensions: scm.extensions + [
-						[$class: 'CloneOption', noTags: false, shallow: true, depth: 1],
+						[$class: 'CloneOption', noTags: false, shallow: false],
 						[$class: 'LocalBranch', localBranch: "**"]
 					],
 					userRemoteConfigs: scm.userRemoteConfigs
@@ -106,29 +106,30 @@ pipeline {
 			when { branch 'dev' }
 			steps {
 				echo 'Tests passed on dev, merging to main...'
-				withCredentials([usernamePassword(credentialsId: GIT_CREDS_ID, usernameVariable: 'GIT_USER', passwordVariable: 'GIT_PASS')]) {
-					sh '''
-                   git config user.email "jenkins@packagito.com"
-                   git config user.name "Jenkins CI"
+				script {
+					withCredentials([usernamePassword(credentialsId: GIT_CREDS_ID, usernameVariable: 'GIT_USER', passwordVariable: 'GIT_PASS')]) {
+						sh '''
+                      git config user.email "jenkins@packagito.com"
+                      git config user.name "Jenkins CI"
 
-                   git remote set-url origin https://${GIT_USER}:${GIT_PASS}@github.com/tahajaiti/Packagito.git
+                      git remote set-url origin https://${GIT_USER}:${GIT_PASS}@github.com/tahajaiti/Packagito.git
 
-                   git fetch origin
+                      git fetch origin
 
-                   if git ls-remote --heads origin main | grep -q main; then
-                       echo "Main branch exists, checking out..."
-                       git checkout -B main origin/main
-                   else
-                       echo "Main branch does not exist, creating from dev..."
-                       git checkout -b main
-                   fi
+                      if git show-ref --verify --quiet refs/remotes/origin/main; then
+                          echo "Main branch exists, checking out..."
+                          git checkout main 2>/dev/null || git checkout -b main origin/main
+                          git reset --hard origin/main
+                      else
+                          echo "Main branch does not exist, creating from current commit..."
+                          git checkout -b main
+                      fi
 
-                   git merge ${GIT_COMMIT} --no-ff -m "[CI/JENKINS]: Merge dev into main" || {
-                       echo "Already up to date or merge completed"
-                   }
+                      git merge origin/dev --no-ff -m "[CI/JENKINS]: Merge dev into main" || echo "Already merged"
 
-                   git push origin main
-                '''
+                      git push origin main
+                   '''
+					}
 				}
 			}
 		}
