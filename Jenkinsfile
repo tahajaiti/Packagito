@@ -117,7 +117,6 @@ pipeline {
                     git fetch origin
 
                     git checkout main || git checkout -b main origin/main
-                    git reset --hard origin/main
 
                     git merge origin/dev --no-ff -m "[CI/JENKINS]: Merge dev into main"
 
