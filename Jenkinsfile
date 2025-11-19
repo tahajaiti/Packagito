@@ -109,26 +109,19 @@ pipeline {
 				script {
 					withCredentials([usernamePassword(credentialsId: GIT_CREDS_ID, usernameVariable: 'GIT_USER', passwordVariable: 'GIT_PASS')]) {
 						sh '''
-                      git config user.email "jenkins@packagito.com"
-                      git config user.name "Jenkins CI"
+                    git config user.email "jenkins@packagito.com"
+                    git config user.name "Jenkins CI"
 
-                      git remote set-url origin https://${GIT_USER}:${GIT_PASS}@github.com/tahajaiti/Packagito.git
+                    git remote set-url origin https://${GIT_USER}:${GIT_PASS}@github.com/tahajaiti/Packagito.git
 
-                      git fetch origin
+                    git fetch origin
 
-                      if git show-ref --verify --quiet refs/remotes/origin/main; then
-                          echo "Main branch exists, checking out..."
-                          git checkout main 2>/dev/null || git checkout -b main origin/main
-                          git reset --hard origin/main
-                      else
-                          echo "Main branch does not exist, creating from current commit..."
-                          git checkout -b main
-                      fi
+                    git checkout main || git checkout -b main origin/main
 
-                      git merge origin/dev --no-ff -m "[CI/JENKINS]: Merge dev into main" || echo "Already merged"
+                    git merge origin/dev --no-ff -m "[CI/JENKINS]: Merge dev into main"
 
-                      git push origin main
-                   '''
+                    git push origin main
+                	'''
 					}
 				}
 			}
@@ -139,23 +132,17 @@ pipeline {
 			steps {
 				echo 'Building and pushing Docker image...'
 				script {
-					sh "mkdir -p ${MAVEN_CACHE} && chmod -R 777 ${MAVEN_CACHE}"
+					sh """
+                  	docker build -t ${DOCKER_IMAGE}:${BUILD_NUMBER} -t ${DOCKER_IMAGE}:latest .
+                	"""
 
 					withCredentials([usernamePassword(credentialsId: DOCKER_CREDS_ID, usernameVariable: 'DOCKER_USER', passwordVariable: 'DOCKER_PASS')]) {
-						docker.image('maven:3.9.6-eclipse-temurin-21')
-						.inside("-v ${MAVEN_CACHE}:/var/maven/.m2") {
-							sh '''
-                            mvn compile jib:build \
-                               -DskipTests \
-                               -Djib.to.image=docker.io/${DOCKER_IMAGE}:${BUILD_NUMBER} \
-                               -Djib.to.tags=latest \
-                               -Djib.to.auth.username=${DOCKER_USER} \
-                               -Djib.to.auth.password=${DOCKER_PASS} \
-                               -Dmaven.repo.local=/var/maven/.m2/repository \
-                               --batch-mode \
-                               -Dorg.slf4j.simpleLogger.log.org.apache.maven.cli.transfer.Slf4jMavenTransferListener=warn
-                         '''
-						}
+						sh '''
+                      echo ${DOCKER_PASS} | docker login -u ${DOCKER_USER} --password-stdin
+                      docker push ${DOCKER_IMAGE}:${BUILD_NUMBER}
+                      docker push ${DOCKER_IMAGE}:latest
+                      docker logout
+                   '''
 					}
 				}
 			}
