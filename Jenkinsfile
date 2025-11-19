@@ -55,7 +55,7 @@ pipeline {
                         mvn clean verify \
                             -Dmaven.repo.local=${WORKSPACE}/.m2/repository \
                             -Dspring.profiles.active=ci
-                    '''
+                    	'''
 					}
 				}
 			}
@@ -66,16 +66,16 @@ pipeline {
 			steps {
 				echo 'Tests passed on dev, merging to main...'
 				withCredentials([usernamePassword(credentialsId: GIT_CREDS_ID, usernameVariable: 'GIT_USER', passwordVariable: 'GIT_PASS')]) {
-					sh """
-                        git config user.email "jenkins@packagito.com"
-                        git config user.name "Jenkins CI"
+					sh '''
+						git config user.email "jenkins@packagito.com"
+						git config user.name "Jenkins CI"
 
-                        git remote set-url origin https://${GIT_USER}:${GIT_PASS}@github.com/tahajaiti/Packagito.git
-                        git fetch origin main
-                        git checkout -B main origin/main
-                        git merge ${env.GIT_COMMIT} --no-ff -m "[CI/JENKINS]: Merge dev into main"
-                        git push origin main
-                    """
+						git remote set-url origin https://${GIT_USER}:${GIT_PASS}@github.com/tahajaiti/Packagito.git
+						git fetch origin main
+						git checkout main
+						git merge origin/dev --no-ff -m "[CI/JENKINS]: Merge dev into main"
+						git push origin main
+					'''
 				}
 			}
 		}
