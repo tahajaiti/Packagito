@@ -45,7 +45,7 @@ pipeline {
                         . ${DOTENV_PATH}
                         set +a
 
-                        mvn ${MAVEN_OPTS} verify
+                        mvn verify
                     """
 				}
 			}
