@@ -3,31 +3,53 @@ pipeline {
 
 	environment {
 		SPRING_PROFILES_ACTIVE = 'ci'
-
 		REPO_URL = 'https://github.com/tahajaiti/Packagito.git'
-
 		GIT_CREDS_ID = 'GITHUB-CREDS'
 		DOCKER_CREDS_ID = 'DOCKERHUB-CREDS'
-
 		DOCKER_IMAGE = 'tahajaiti/packagito'
+
+		MAVEN_CACHE = "${JENKINS_HOME}/maven-cache"
+		DOCKER_LAYER_CACHE = "${JENKINS_HOME}/docker-cache"
 	}
 
 	options {
 		timestamps()
 		timeout(time: 20, unit: 'MINUTES')
 		skipStagesAfterUnstable()
+		buildDiscarder(logRotator(numToKeepStr: '10', artifactNumToKeepStr: '5'))
+		disableConcurrentBuilds()
 	}
 
 	stages {
-		stage('Clean Workspace') {
+		stage('Selective Clean') {
 			steps {
-				deleteDir()
+				script {
+					sh '''
+                   echo "Cleaning build artifacts, preserving caches..."
+                   rm -rf target/
+                   rm -rf .env
+                   find . -name "*.log" -type f -delete
+                '''
+
+					if (currentBuild.number % 20 == 0) {
+						echo "Performing deep clean (build #${currentBuild.number})"
+						deleteDir()
+					}
+				}
 			}
 		}
 
 		stage('Checkout') {
 			steps {
-				checkout scm
+				checkout([
+					$class: 'GitSCM',
+					branches: scm.branches,
+					extensions: scm.extensions + [
+						[$class: 'CloneOption', noTags: false, shallow: true, depth: 1],
+						[$class: 'LocalBranch', localBranch: "**"]
+					],
+					userRemoteConfigs: scm.userRemoteConfigs
+				])
 			}
 		}
 
@@ -41,21 +63,38 @@ pipeline {
 
 		stage('Start Services') {
 			steps {
-				sh 'docker compose up -d --wait mongodb'
+				script {
+					def mongoRunning = sh(
+						script: 'docker ps --filter "name=packagito_db" --filter "status=running" -q',
+						returnStdout: true
+					).trim()
+
+					if (mongoRunning) {
+						echo "MongoDB already running, skipping startup..."
+					} else {
+						echo "Starting MongoDB..."
+						sh 'docker compose up -d --wait mongodb'
+					}
+				}
 			}
 		}
 
 		stage('Build & Test') {
 			steps {
 				script {
+					sh "mkdir -p ${MAVEN_CACHE}"
+
 					docker.image('maven:3.9.6-eclipse-temurin-21')
-					.inside("--network packagito_net") {
+					.inside("--network packagito_net -v ${MAVEN_CACHE}:/root/.m2") {
 						sh '''
-                        mkdir -p ${WORKSPACE}/.m2/repository
-                        mvn clean verify \
-                            -Dmaven.repo.local=${WORKSPACE}/.m2/repository \
-                            -Dspring.profiles.active=ci
-                    	'''
+                         # Use cached dependencies
+                         mvn clean verify \
+                            -Dspring.profiles.active=ci \
+                            -Dmaven.test.failure.ignore=false \
+                            --batch-mode \
+                            --show-version \
+                            -Dorg.slf4j.simpleLogger.log.org.apache.maven.cli.transfer.Slf4jMavenTransferListener=warn
+                      '''
 					}
 				}
 			}
@@ -67,15 +106,27 @@ pipeline {
 				echo 'Tests passed on dev, merging to main...'
 				withCredentials([usernamePassword(credentialsId: GIT_CREDS_ID, usernameVariable: 'GIT_USER', passwordVariable: 'GIT_PASS')]) {
 					sh '''
-						git config user.email "jenkins@packagito.com"
-						git config user.name "Jenkins CI"
+                   git config user.email "jenkins@packagito.com"
+                   git config user.name "Jenkins CI"
 
-						git remote set-url origin https://${GIT_USER}:${GIT_PASS}@github.com/tahajaiti/Packagito.git
-						git fetch origin main
-						git checkout main
-						git merge origin/dev --no-ff -m "[CI/JENKINS]: Merge dev into main"
-						git push origin main
-					'''
+                   git remote set-url origin https://${GIT_USER}:${GIT_PASS}@github.com/tahajaiti/Packagito.git
+
+                   git fetch origin
+
+                   if git ls-remote --heads origin main | grep -q main; then
+                       echo "Main branch exists, checking out..."
+                       git checkout -B main origin/main
+                   else
+                       echo "Main branch does not exist, creating from dev..."
+                       git checkout -b main
+                   fi
+
+                   git merge ${GIT_COMMIT} --no-ff -m "[CI/JENKINS]: Merge dev into main" || {
+                       echo "Already up to date or merge completed"
+                   }
+
+                   git push origin main
+                '''
 				}
 			}
 		}
@@ -84,28 +135,62 @@ pipeline {
 			when { branch 'main' }
 			steps {
 				echo 'Building and pushing Docker image...'
-				withCredentials([usernamePassword(credentialsId: DOCKER_CREDS_ID, usernameVariable: 'DOCKER_USER', passwordVariable: 'DOCKER_PASS')]) {
-					sh """
-                        mvn compile jib:build \
-                            -DskipTests \
-                            -Djib.to.image=docker.io/${DOCKER_IMAGE}:${env.BUILD_NUMBER} \
-                            -Djib.to.tags=latest \
-                            -Djib.to.auth.username=${DOCKER_USER} \
-                            -Djib.to.auth.password=${DOCKER_PASS}
-                    """
+				script {
+					sh "mkdir -p ${MAVEN_CACHE}"
+
+					withCredentials([usernamePassword(credentialsId: DOCKER_CREDS_ID, usernameVariable: 'DOCKER_USER', passwordVariable: 'DOCKER_PASS')]) {
+						docker.image('maven:3.9.6-eclipse-temurin-21')
+						.inside("-v ${MAVEN_CACHE}:/root/.m2") {
+							sh '''
+                            mvn compile jib:build \
+                               -DskipTests \
+                               -Djib.to.image=docker.io/${DOCKER_IMAGE}:${BUILD_NUMBER} \
+                               -Djib.to.tags=latest \
+                               -Djib.to.auth.username=${DOCKER_USER} \
+                               -Djib.to.auth.password=${DOCKER_PASS} \
+                               --batch-mode \
+                               -Dorg.slf4j.simpleLogger.log.org.apache.maven.cli.transfer.Slf4jMavenTransferListener=warn
+                         '''
+						}
+					}
 				}
 			}
 		}
 	}
 
 	post {
-		failure { echo "[ERROR]: Build FAILED on branch ${env.BRANCH_NAME}" }
+		always {
+			script {
+				if (currentBuild.number % 10 == 0) {
+					echo "Periodic cleanup: stopping Docker services..."
+					sh 'docker compose down || true'
+				}
+			}
+		}
+
+		failure {
+			echo "[ERROR]: Build FAILED on branch ${env.BRANCH_NAME}"
+			sh 'docker compose ps'
+		}
+
 		success {
 			script {
 				if (env.BRANCH_NAME == 'dev') {
 					echo "[DEV SUCCESS]: Code merged to main"
 				} else if (env.BRANCH_NAME == 'main') {
 					echo "[MAIN SUCCESS]: Docker Image Deployed: ${DOCKER_IMAGE}:${env.BUILD_NUMBER}"
+				}
+			}
+		}
+
+		cleanup {
+			script {
+				if (currentBuild.number % 30 == 0) {
+					echo "Cleaning old Maven artifacts..."
+					sh """
+                   find ${MAVEN_CACHE} -name "*.lastUpdated" -delete
+                   find ${MAVEN_CACHE} -type d -empty -delete
+                """
 				}
 			}
 		}
