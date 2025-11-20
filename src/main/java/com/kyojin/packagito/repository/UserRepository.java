@@ -17,7 +17,7 @@ public interface UserRepository extends MongoRepository<User, String> {
 
     boolean existsByUsername(String login);
 
-    Page<User> findByRole(Role role, Pageable pageable);pecialty
+    Page<User> findByRole(Role role, Pageable pageable);
 
     Page<User> findByRoleAndSpecialty(Role role, Specialty specialty, Pageable pageable);
 
