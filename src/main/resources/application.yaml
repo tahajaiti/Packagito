@@ -28,6 +28,7 @@ app:
     secret-key: ${JWT_SECRET_KEY}
     expiration-ms: ${JWT_EXPIRATION_MS:1200000}
     issuer: ${JWT_ISSUER_NAME:PackagitoApp}
+    cookie-name: ${JWT_COOKIE_NAME:jwt-token}
     refresh:
       secret-key: ${JWT_REFRESH_SECRET_KEY}
       expiration-ms: ${JWT_REFRESH_EXPIRATION_MS:604800000}
