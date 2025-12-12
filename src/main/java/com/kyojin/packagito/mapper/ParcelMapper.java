@@ -51,7 +51,7 @@ public interface ParcelMapper {
     @Mapping(target = "temperatureMin", source = "parcel", qualifiedByName = "extractTemperatureMin")
     @Mapping(target = "temperatureMax", source = "parcel", qualifiedByName = "extractTemperatureMax")
     @Mapping(target = "carrierUsername", ignore = true)
-    ParcelDTO toParcelResponse(Parcel parcel);
+    ParcelDTO toDTO(Parcel parcel);
 
 
     // update
