@@ -6,7 +6,7 @@ COPY pom.xml .
 RUN mvn dependency:go-offline -B
 
 COPY src ./src
-RUN mvn clean package -DskipTests -B -q
+RUN mvn clean package -B -q -DskipTests
 
 FROM eclipse-temurin:21-jre-alpine
 
@@ -22,4 +22,4 @@ USER spring:spring
 
 EXPOSE 8080
 
-ENTRYPOINT ["sh", "-c", "java -jar app.jar"]
+ENTRYPOINT ["sh", "-c", "java -jar app.jar --spring.profiles.active=${SPRING_PROFILES_ACTIVE}"]

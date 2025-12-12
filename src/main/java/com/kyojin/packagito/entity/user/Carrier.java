@@ -2,21 +2,23 @@ package com.kyojin.packagito.entity.user;
 
 import com.kyojin.packagito.entity.enums.CarrierStatus;
 import com.kyojin.packagito.entity.enums.Specialty;
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.EqualsAndHashCode;
-import lombok.NoArgsConstructor;
+import lombok.*;
 import lombok.experimental.SuperBuilder;
 import org.springframework.data.annotation.TypeAlias;
+import org.springframework.data.mongodb.core.mapping.Document;
 
 @Data
 @SuperBuilder
 @NoArgsConstructor
 @AllArgsConstructor
 @EqualsAndHashCode(callSuper = true)
+@ToString(callSuper = true)
+@Document(collection = "users")
 @TypeAlias("carrier")
 public class Carrier extends User {
-    private CarrierStatus status;
+
+    @Builder.Default
+    private CarrierStatus status = CarrierStatus.AVAILABLE;
 
     private Specialty specialty;
 }
