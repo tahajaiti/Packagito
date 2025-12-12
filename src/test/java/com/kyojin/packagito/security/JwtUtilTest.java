@@ -47,6 +47,7 @@ class JwtUtilTest {
         ReflectionTestUtils.setField(jwtUtil, "jwtSecret", TEST_SECRET);
         ReflectionTestUtils.setField(jwtUtil, "jwtExpirationMs", TEST_EXPIRATION_MS);
         ReflectionTestUtils.setField(jwtUtil, "jwtIssuer", TEST_ISSUER);
+        jwtUtil.init();
     }
 
     @Test
