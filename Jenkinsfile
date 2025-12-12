@@ -63,6 +63,10 @@ pipeline {
 		stage('Start Services') {
 			steps {
 				script {
+				    echo "Ensuring clean database state..."
+                    
+                    sh 'docker rm -f packagito_db || true'
+
 					def mongoRunning = sh(
 						script: 'docker ps --filter "name=packagito_db" --filter "status=running" -q',
 						returnStdout: true
