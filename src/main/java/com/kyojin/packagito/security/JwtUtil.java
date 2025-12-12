@@ -8,6 +8,7 @@ import io.jsonwebtoken.UnsupportedJwtException;
 import io.jsonwebtoken.io.Decoders;
 import io.jsonwebtoken.security.Keys;
 import io.jsonwebtoken.security.SignatureException;
+import jakarta.annotation.PostConstruct;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.Authentication;
@@ -16,7 +17,6 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Component;
 
 import javax.crypto.SecretKey;
-import java.security.Key;
 import java.util.Date;
 import java.util.stream.Collectors;
 
@@ -28,10 +28,17 @@ public class JwtUtil {
     private String jwtSecret;
 
     @Value("${app.jwt.expiration-ms}")
-    private int jwtExpirationMs;
+    private long jwtExpirationMs;
 
     @Value("${app.jwt.issuer}")
     private String jwtIssuer;
+
+    private SecretKey key;
+
+    @PostConstruct
+    public void init() {
+        this.key = Keys.hmacShaKeyFor(Decoders.BASE64.decode(jwtSecret));
+    }
 
     public String generateJwt(Authentication authentication) {
         var userPrincipal = (UserDetails) authentication.getPrincipal();
@@ -40,13 +47,15 @@ public class JwtUtil {
                 .map(GrantedAuthority::getAuthority)
                 .collect(Collectors.joining(","));
 
+        Date now = new Date();
+
         return Jwts.builder()
                 .subject(userPrincipal.getUsername())
                 .issuer(jwtIssuer)
-                .claim("role", roles)
-                .issuedAt(new Date())
-                .expiration(new Date((new Date()).getTime() + jwtExpirationMs))
-                .signWith(key())
+                .claim("roles", roles)
+                .issuedAt(now)
+                .expiration(new Date(now.getTime() + jwtExpirationMs))
+                .signWith(key)
                 .compact();
     }
 
@@ -54,10 +63,15 @@ public class JwtUtil {
         return getClaims(token).getSubject();
     }
 
+    public String getRolesFromToken(String token) {
+        return getClaims(token).get("roles", String.class);
+    }
+
     public boolean validateToken(String token) {
         try {
             Jwts.parser()
-                    .verifyWith((SecretKey) key())
+                    .verifyWith(key)
+                    .requireIssuer(jwtIssuer)
                     .build()
                     .parseSignedClaims(token);
             return true;
@@ -77,13 +91,9 @@ public class JwtUtil {
 
     private Claims getClaims(String token) {
         return Jwts.parser()
-                .verifyWith((SecretKey) key())
+                .verifyWith(key)
                 .build()
                 .parseSignedClaims(token)
                 .getPayload();
-    }
-
-    private Key key() {
-        return Keys.hmacShaKeyFor(Decoders.BASE64.decode(jwtSecret));
     }
 }
