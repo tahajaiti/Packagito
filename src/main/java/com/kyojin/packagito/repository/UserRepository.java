@@ -1,7 +1,6 @@
 package com.kyojin.packagito.repository;
 
 import com.kyojin.packagito.entity.enums.Role;
-import com.kyojin.packagito.entity.enums.Specialty;
 import com.kyojin.packagito.entity.user.User;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
