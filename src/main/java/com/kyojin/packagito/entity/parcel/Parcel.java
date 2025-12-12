@@ -24,9 +24,6 @@ public abstract class Parcel {
     @Id
     private String id;
 
-    @Indexed
-    private ParcelType type;
-
     private Double weight;
 
     @Indexed
