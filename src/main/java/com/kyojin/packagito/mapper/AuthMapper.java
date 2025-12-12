@@ -3,6 +3,7 @@ package com.kyojin.packagito.mapper;
 
 import com.kyojin.packagito.dto.request.RegisterRequest;
 import com.kyojin.packagito.dto.response.AuthResponse;
+import com.kyojin.packagito.dto.response.UserDTO;
 import com.kyojin.packagito.entity.enums.CarrierStatus;
 import com.kyojin.packagito.entity.enums.Role;
 import com.kyojin.packagito.entity.user.Carrier;
@@ -27,6 +28,9 @@ public interface AuthMapper {
     @Mapping(target = "updatedAt", ignore = true)
     Carrier toCarrier(RegisterRequest request);
 
+    @Mapping(target = "status", source = "user", qualifiedByName = "extractStatus")
+    @Mapping(target = "specialty", source = "user", qualifiedByName = "extractSpecialty")
+    UserDTO toDTO(User user);
 
     @Named("extractStatus")
     default CarrierStatus extractStatus(User user) {
