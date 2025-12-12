@@ -1,5 +1,6 @@
 package com.kyojin.packagito;
 
+import com.kyojin.packagito.repository.ParcelRepository;
 import com.kyojin.packagito.repository.UserRepository;
 import org.junit.jupiter.api.Test;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -12,6 +13,9 @@ class PackagitoApplicationTests {
 
     @MockitoBean
     private UserRepository userRepository;
+
+    @MockitoBean
+    private ParcelRepository parcelRepository;
 
 	@Test
 	void contextLoads() {
