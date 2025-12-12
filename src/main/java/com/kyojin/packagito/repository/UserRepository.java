@@ -19,7 +19,7 @@ public interface UserRepository extends MongoRepository<User, String> {
 
     Page<User> findByRole(Role role, Pageable pageable);
 
-    Page<User> findByRoleAndSpecialty(Role role, Specialty specialty, Pageable pageable);
+//    Page<User> findByRoleAndSpecialty(Role role, Specialty specialty, Pageable pageable);
 
     Page<User> findByActive(boolean active, Pageable pageable);
 }
