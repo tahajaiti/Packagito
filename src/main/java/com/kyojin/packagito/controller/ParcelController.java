@@ -23,7 +23,7 @@ public class ParcelController {
     private final ParcelService parcelService;
 
     @PostMapping
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasAuthority('ADMIN')")
     public ResponseEntity<ParcelDTO> createParcel(@RequestBody CreateParcelRequest request) {
         ParcelDTO parcelDTO = parcelService.create(request);
         return ResponseEntity.ok(parcelDTO);
@@ -44,21 +44,21 @@ public class ParcelController {
     }
 
     @PutMapping("/{id}")
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasAuthority('ADMIN')")
     public ResponseEntity<ParcelDTO> update(@PathVariable String id, @RequestBody UpdateParcelRequest request) {
         ParcelDTO parcelDTO = parcelService.update(id, request);
         return ResponseEntity.ok(parcelDTO);
     }
 
     @DeleteMapping("/{id}")
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasAuthority('ADMIN')")
     public ResponseEntity<Void> delete(@PathVariable String id) {
         parcelService.delete(id);
         return ResponseEntity.noContent().build();
     }
 
     @PatchMapping("/{id}/assign/{carrierId}")
-    @PreAuthorize("hasRole('ADMIN')")
+    @PreAuthorize("hasAuthority('ADMIN')")
     public ResponseEntity<ParcelDTO> assign(
             @PathVariable String id,
             @PathVariable String carrierId) {

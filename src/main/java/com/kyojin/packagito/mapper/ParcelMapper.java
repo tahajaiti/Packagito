@@ -24,7 +24,6 @@ public interface ParcelMapper {
     }
 
     @Mapping(target = "id", ignore = true)
-    @Mapping(target = "type", expression = "java(ParcelType.STANDARD)")
     @Mapping(target = "status", expression = "java(ParcelStatus.PENDING)")
     @Mapping(target = "carrierId", ignore = true)
     @Mapping(target = "createdAt", ignore = true)
@@ -32,7 +31,6 @@ public interface ParcelMapper {
     StandardParcel toStandardParcel(CreateParcelRequest request);
 
     @Mapping(target = "id", ignore = true)
-    @Mapping(target = "type", expression = "java(ParcelType.FRAGILE)")
     @Mapping(target = "status", expression = "java(ParcelStatus.PENDING)")
     @Mapping(target = "carrierId", ignore = true)
     @Mapping(target = "createdAt", ignore = true)
@@ -40,7 +38,6 @@ public interface ParcelMapper {
     FragileParcel toFragileParcel(CreateParcelRequest request);
 
     @Mapping(target = "id", ignore = true)
-    @Mapping(target = "type", expression = "java(ParcelType.FRIGO)")
     @Mapping(target = "status", expression = "java(ParcelStatus.PENDING)")
     @Mapping(target = "carrierId", ignore = true)
     @Mapping(target = "createdAt", ignore = true)
@@ -67,7 +64,6 @@ public interface ParcelMapper {
 
     @BeanMapping(nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)
     @Mapping(target = "id", ignore = true)
-    @Mapping(target = "type", ignore = true)
     @Mapping(target = "status", ignore = true)
     @Mapping(target = "carrierId", ignore = true)
     @Mapping(target = "createdAt", ignore = true)
@@ -76,7 +72,6 @@ public interface ParcelMapper {
 
     @BeanMapping(nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)
     @Mapping(target = "id", ignore = true)
-    @Mapping(target = "type", ignore = true)
     @Mapping(target = "status", ignore = true)
     @Mapping(target = "carrierId", ignore = true)
     @Mapping(target = "createdAt", ignore = true)
@@ -85,7 +80,6 @@ public interface ParcelMapper {
 
     @BeanMapping(nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)
     @Mapping(target = "id", ignore = true)
-    @Mapping(target = "type", ignore = true)
     @Mapping(target = "status", ignore = true)
     @Mapping(target = "carrierId", ignore = true)
     @Mapping(target = "createdAt", ignore = true)

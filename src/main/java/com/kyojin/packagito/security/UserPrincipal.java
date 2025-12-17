@@ -22,15 +22,18 @@ public class UserPrincipal implements UserDetails {
     private String id;
     private String username;
     private String password;
+    private boolean active;
     private Collection<? extends GrantedAuthority> authorities;
 
     public static UserPrincipal create(User user) {
-         List<GrantedAuthority> authorities = Collections.singletonList(new SimpleGrantedAuthority(user.getRole().name()));
+        List<GrantedAuthority> authorities = Collections
+                .singletonList(new SimpleGrantedAuthority(user.getRole().name()));
 
         return UserPrincipal.builder()
                 .id(user.getId())
                 .username(user.getUsername())
                 .password(user.getPassword())
+                .active(user.isActive())
                 .authorities(authorities)
                 .build();
     }
@@ -41,11 +44,22 @@ public class UserPrincipal implements UserDetails {
     }
 
     @Override
-    public boolean isAccountNonExpired() { return true; }
+    public boolean isAccountNonExpired() {
+        return true;
+    }
+
     @Override
-    public boolean isAccountNonLocked() { return true; }
+    public boolean isAccountNonLocked() {
+        return true;
+    }
+
     @Override
-    public boolean isCredentialsNonExpired() { return true; }
+    public boolean isCredentialsNonExpired() {
+        return true;
+    }
+
     @Override
-    public boolean isEnabled() { return true; }
+    public boolean isEnabled() {
+        return active;
+    }
 }

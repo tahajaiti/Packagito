@@ -48,7 +48,7 @@ public class ParcelServiceImpl implements ParcelService {
     @Override
     public Page<ParcelDTO> findAll(Pageable pageable, String destination, UserPrincipal currentUser) {
         boolean isAdmin = currentUser.getAuthorities().stream()
-                .anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN"));
+                .anyMatch(a -> a.getAuthority().equals("ADMIN"));
 
         boolean hasSearch = destination != null && !destination.isBlank();
 
@@ -149,7 +149,7 @@ public class ParcelServiceImpl implements ParcelService {
                 .orElseThrow(() -> new NotFoundException("Parcel not found"));
 
         boolean isAdmin = currentUser.getAuthorities().stream()
-                .anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN"));
+                .anyMatch(a -> a.getAuthority().equals("ADMIN"));
 
         if (!isAdmin && !parcel.getCarrierId().equals(currentUser.getId())) {
             throw new RuntimeException("You are not assigned to this parcel");
