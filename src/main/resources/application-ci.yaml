@@ -11,6 +11,13 @@ spring:
     lazy-initialization: true
 
 app:
+  jwt:
+    secret-key: bd25ec392f76dbc79a278b5317d4fb0a796c780c04f49e4c0ac763419c518c5c
+    refresh:
+      secret-key: bd25ec392f76dbc79a278b531799fb0a796c780c04f49e4c0ac763419c518crd
+  admin:
+    init-login: admin
+    init-password: admin123
   security:
     bcrypt-strength: 4
 
