@@ -29,9 +29,10 @@ public class ParcelController {
 
     @GetMapping
     public ResponseEntity<Page<ParcelDTO>> findAll(
+            @RequestParam(required = false) String destination,
             Pageable pageable,
             @AuthenticationPrincipal UserPrincipal currentUser) {
-        return ResponseEntity.ok(parcelService.findAll(pageable, currentUser));
+        return ResponseEntity.ok(parcelService.findAll(pageable, destination, currentUser));
     }
 
     @GetMapping("/{id}")

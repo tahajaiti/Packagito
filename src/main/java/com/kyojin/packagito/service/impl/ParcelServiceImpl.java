@@ -4,12 +4,17 @@ import com.kyojin.packagito.core.exception.NotFoundException;
 import com.kyojin.packagito.dto.request.CreateParcelRequest;
 import com.kyojin.packagito.dto.request.UpdateParcelRequest;
 import com.kyojin.packagito.dto.response.ParcelDTO;
+import com.kyojin.packagito.entity.enums.ParcelStatus;
+import com.kyojin.packagito.entity.enums.ParcelType;
 import com.kyojin.packagito.entity.parcel.Parcel;
 import com.kyojin.packagito.mapper.ParcelMapper;
 import com.kyojin.packagito.repository.ParcelRepository;
+import com.kyojin.packagito.security.UserPrincipal;
 import com.kyojin.packagito.service.ParcelService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 @Service
@@ -34,6 +39,23 @@ public class ParcelServiceImpl implements ParcelService {
         return parcelMapper.toDTO(saved);
     }
 
+    @Override
+    public Page<ParcelDTO> findAll(Pageable pageable, String destination, UserPrincipal currentUser) {
+        boolean isAdmin = currentUser.getAuthorities().stream()
+                .anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN"));
+
+        boolean hasSearch = destination != null && !destination.isBlank();
+
+        if (isAdmin) {
+            return hasSearch
+                    ? parcelRepository.findAllByDestinationAddressContainingIgnoreCase(destination, pageable).map(parcelMapper::toDTO)
+                    : parcelRepository.findAll(pageable).map(parcelMapper::toDTO);
+        } else {
+            return hasSearch
+                    ? parcelRepository.findAllByCarrierIdAndDestinationAddressContainingIgnoreCase(currentUser.getId(), destination, pageable).map(parcelMapper::toDTO)
+                    : parcelRepository.findAllByCarrierId(currentUser.getId(), pageable).map(parcelMapper::toDTO);
+        }
+    }
 
     @Override
     public ParcelDTO findById(String id) {
