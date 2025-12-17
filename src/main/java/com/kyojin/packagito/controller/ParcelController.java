@@ -55,5 +55,12 @@ public class ParcelController {
         return ResponseEntity.noContent().build();
     }
 
+    @PatchMapping("/{id}/assign/{carrierId}")
+    @PreAuthorize("hasRole('ADMIN')")
+    public ResponseEntity<ParcelDTO> assign(
+            @PathVariable String id,
+            @PathVariable String carrierId) {
+        return ResponseEntity.ok(parcelService.assign(id, carrierId));
+    }
 
 }

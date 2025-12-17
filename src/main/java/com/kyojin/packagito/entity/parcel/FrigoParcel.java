@@ -17,10 +17,9 @@ import org.springframework.data.mongodb.core.mapping.Document;
 @TypeAlias("frigo")
 public class FrigoParcel extends Parcel {
 
-    @Indexed
-    @Builder.Default
-    private ParcelType type = ParcelType.FRIGO;
-
+    {
+        setParcelType(ParcelType.FRIGO);
+    }
 
     private Double temperatureMin;
 

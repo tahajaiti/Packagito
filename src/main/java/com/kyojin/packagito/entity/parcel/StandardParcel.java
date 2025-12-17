@@ -17,8 +17,10 @@ import org.springframework.data.mongodb.core.mapping.Document;
 @TypeAlias("standard")
 public class StandardParcel extends Parcel {
 
-    @Indexed
-    @Builder.Default
-    private ParcelType type = ParcelType.STANDARD;
+    {
+        setParcelType(ParcelType.STANDARD);
+    }
+
+
 
 }

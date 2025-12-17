@@ -17,9 +17,9 @@ import org.springframework.data.mongodb.core.mapping.Document;
 @TypeAlias("fragile")
 public class FragileParcel extends Parcel {
 
-    @Indexed
-    @Builder.Default
-    private ParcelType type = ParcelType.FRAGILE;
+    {
+        setParcelType(ParcelType.FRAGILE);
+    }
 
 
     private String handlingInstructions;

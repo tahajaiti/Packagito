@@ -19,4 +19,6 @@ public interface ParcelService {
 
     void delete(String id);
 
+    ParcelDTO assign(String parcelId, String carrierId);
+
 }

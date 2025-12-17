@@ -33,6 +33,9 @@ public abstract class Parcel {
     private ParcelStatus status;
 
     @Indexed
+    private ParcelType parcelType;
+
+    @Indexed
     private String carrierId;
 
     @CreatedDate
