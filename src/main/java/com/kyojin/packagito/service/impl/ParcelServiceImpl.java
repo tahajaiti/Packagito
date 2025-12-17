@@ -141,6 +141,28 @@ public class ParcelServiceImpl implements ParcelService {
         return parcelMapper.toDTO(saved);
     }
 
+    @Override
+    public ParcelDTO updateStatus(String parcelId, ParcelStatus status, UserPrincipal currentUser) {
+        log.info("Updating parcel {} status to {}", parcelId, status);
+
+        Parcel parcel = parcelRepository.findById(parcelId)
+                .orElseThrow(() -> new NotFoundException("Parcel not found"));
+
+        boolean isAdmin = currentUser.getAuthorities().stream()
+                .anyMatch(a -> a.getAuthority().equals("ROLE_ADMIN"));
+
+        if (!isAdmin && !parcel.getCarrierId().equals(currentUser.getId())) {
+            throw new RuntimeException("You are not assigned to this parcel");
+        }
+
+        parcel.setStatus(status);
+        Parcel saved = parcelRepository.save(parcel);
+
+        log.info("Parcel status updated: {}", saved);
+
+        return parcelMapper.toDTO(saved);
+    }
+
     private boolean isSpecialtyCompatible(Specialty specialty, ParcelType parcelType) {
         return specialty.name().equals(parcelType.name());
     }

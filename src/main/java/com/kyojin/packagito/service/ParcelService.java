@@ -3,6 +3,7 @@ package com.kyojin.packagito.service;
 import com.kyojin.packagito.dto.request.CreateParcelRequest;
 import com.kyojin.packagito.dto.request.UpdateParcelRequest;
 import com.kyojin.packagito.dto.response.ParcelDTO;
+import com.kyojin.packagito.entity.enums.ParcelStatus;
 import com.kyojin.packagito.security.UserPrincipal;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -20,5 +21,7 @@ public interface ParcelService {
     void delete(String id);
 
     ParcelDTO assign(String parcelId, String carrierId);
+
+    ParcelDTO updateStatus(String parcelId, ParcelStatus status, UserPrincipal currentUser);
 
 }

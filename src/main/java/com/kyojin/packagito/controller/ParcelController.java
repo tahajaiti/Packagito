@@ -2,9 +2,11 @@ package com.kyojin.packagito.controller;
 
 import com.kyojin.packagito.dto.request.CreateParcelRequest;
 import com.kyojin.packagito.dto.request.UpdateParcelRequest;
+import com.kyojin.packagito.dto.request.UpdateStatusRequest;
 import com.kyojin.packagito.dto.response.ParcelDTO;
 import com.kyojin.packagito.security.UserPrincipal;
 import com.kyojin.packagito.service.ParcelService;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -61,6 +63,14 @@ public class ParcelController {
             @PathVariable String id,
             @PathVariable String carrierId) {
         return ResponseEntity.ok(parcelService.assign(id, carrierId));
+    }
+
+    @PatchMapping("/{id}/status")
+    public ResponseEntity<ParcelDTO> updateStatus(
+            @PathVariable String id,
+            @Valid @RequestBody UpdateStatusRequest request,
+            @AuthenticationPrincipal UserPrincipal currentUser) {
+        return ResponseEntity.ok(parcelService.updateStatus(id, request.getStatus(), currentUser));
     }
 
 }
